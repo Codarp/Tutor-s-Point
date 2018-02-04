@@ -1,0 +1,636 @@
+
+package tutorspoint_client;
+
+import com.sun.jna.Native;
+import uk.co.caprica.vlcj.binding.LibVlc;
+import uk.co.caprica.vlcj.mrl.RtspMrl;
+import uk.co.caprica.vlcj.runtime.RuntimeUtil;
+import com.sun.jna.NativeLibrary;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.Timer;
+import uk.co.caprica.vlcj.player.MediaPlayerFactory;
+import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
+
+public class Stream extends javax.swing.JFrame implements Runnable{
+
+    DataOutputStream dout,dos;
+    DataInputStream din,dis;
+    private final EmbeddedMediaPlayer mediaPlayerComponent;
+    static String name,ip;
+    static String stream,sub;
+    static Socket s,socket;
+    static String video,author,date,course;
+    Timer timer;
+    double rate=0;
+    
+    public Stream(Socket s,String name,String stream,String video,String author,String course,String sub,String date,String ip)  {
+        initComponents();
+        this.ip=ip;
+        getContentPane().setBackground(new java.awt.Color(255,255,153));
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        this.setTitle(video);
+        this.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosing(WindowEvent event) {
+            exitProcedure();
+        }
+    });
+        this.s = s;
+        this.video = video;
+        this.author = author;
+        this.course = course;
+        this.date = date;
+        this.name = name;
+        this.stream = stream;
+        this.sub = sub;
+        
+        NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), "VLC");
+        Native.loadLibrary(RuntimeUtil.getLibVlcLibraryName(), LibVlc.class);
+        canvas.setBackground(Color.black);
+        MediaPlayerFactory factory = new MediaPlayerFactory();
+        mediaPlayerComponent = factory.newEmbeddedMediaPlayer();
+        String address;
+        try{
+            System.out.println(ip+" "+stream);
+            socket = new Socket(ip,8554);
+            dout = new DataOutputStream(socket.getOutputStream());
+            din = new DataInputStream(socket.getInputStream());
+            address = new RtspMrl().host("@"+ip).port(5555).path("/"+stream).value();
+            System.out.println(address);
+            mediaPlayerComponent.setVideoSurface(factory.newVideoSurface(canvas));
+            mediaPlayerComponent.setFullScreen(true);
+            mediaPlayerComponent.playMedia(address);
+            
+            dout.writeUTF("change");
+            dout.writeUTF("0.000000");
+            slider.setMinimum(0);
+            slider.setValue(0);
+            
+            dos = new DataOutputStream(s.getOutputStream());
+            dis = new DataInputStream(s.getInputStream());
+            Thread t = new Thread(this);
+            t.start();
+            int n = video.indexOf('.');
+            lbl_date.setText("<html>\t<font size=15 color=\'red\'><b>&nbsp;"+video.substring(0,n)+"</b></font><br>&nbsp;&nbsp;Author : "+author+"<br>&nbsp;&nbsp;Course : "+course+"<br>&nbsp;&nbsp;Sub-Course :"+sub+"<br>&nbsp;&nbsp;Date : "+date+"</html>");            
+            System.out.println("tutorspoint_client.Stream.<init>()");
+            timer = new Timer(1000, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        dout.writeUTF("position");
+                        float f = Float.parseFloat(din.readUTF());
+            
+                        slider.setValue(Math.round(f * 100));
+                    } catch (IOException ex) {
+                        JOptionPane.showMessageDialog(null,"Socket Closed");
+                    }
+                }
+            });
+            timer.start();
+        }
+        catch (Exception e){
+            JOptionPane.showMessageDialog(null,"Excepitons as "+e.getMessage());
+        }
+    }
+    public void exitProcedure() {
+        try {
+            dout.writeUTF("change");
+            dout.writeUTF(""+(1.0f));
+            dout.writeUTF("exit");
+            timer.stop();
+            System.out.println("Socket s going to be closed");
+            socket.close();
+            System.out.println("Socket closed");
+            this.setVisible(false);
+            ListVideos l = new ListVideos(s,name,ip);
+            l.setVisible(true);
+        } 
+        catch (IOException ex) {
+            JOptionPane.showMessageDialog(null,ex.getMessage());
+        }
+    }
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    
+    private static String formatRtspStream(String serverAddress, int serverPort, String id) {
+        StringBuilder sb = new StringBuilder(60);
+        sb.append(":sout=#rtp{sdp=rtsp://@");
+        sb.append(serverAddress);
+        sb.append(':');
+        sb.append(serverPort);
+        sb.append('/');
+        sb.append(id);
+        sb.append("mux=ts}");
+        return sb.toString();
+    }
+    
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        jPanel1 = new javax.swing.JPanel();
+        canvas = new java.awt.Canvas();
+        jPanel2 = new javax.swing.JPanel();
+        slider = new javax.swing.JSlider();
+        jPanel3 = new javax.swing.JPanel();
+        lbl_date = new javax.swing.JLabel();
+        jPanel4 = new javax.swing.JPanel();
+        jPanel6 = new javax.swing.JPanel();
+        btn_play = new javax.swing.JButton();
+        lbl_comment = new javax.swing.JLabel();
+        cmb_rate = new javax.swing.JComboBox<>();
+        lbl_rating = new javax.swing.JLabel();
+        btn_rate = new javax.swing.JButton();
+        jPanel5 = new javax.swing.JPanel();
+        lbl_like = new javax.swing.JLabel();
+        btn_subscribe = new javax.swing.JButton();
+        lbl_num_like = new javax.swing.JLabel();
+        btn_towatch = new javax.swing.JButton();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setBackground(new java.awt.Color(255, 255, 153));
+        setPreferredSize(new java.awt.Dimension(731, 528));
+
+        jPanel1.setBackground(new java.awt.Color(255, 255, 153));
+        jPanel1.setMinimumSize(new java.awt.Dimension(472, 240));
+        jPanel1.setPreferredSize(new java.awt.Dimension(677, 240));
+
+        canvas.setMinimumSize(new java.awt.Dimension(472, 204));
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(canvas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(canvas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+
+        getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
+
+        jPanel2.setBackground(new java.awt.Color(255, 204, 204));
+        jPanel2.setMaximumSize(new java.awt.Dimension(32767, 72));
+        jPanel2.setMinimumSize(new java.awt.Dimension(36, 85));
+        jPanel2.setPreferredSize(new java.awt.Dimension(472, 160));
+        jPanel2.setRequestFocusEnabled(false);
+        jPanel2.setLayout(new java.awt.BorderLayout());
+
+        slider.setBackground(new java.awt.Color(255, 255, 153));
+        slider.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                sliderMouseReleased(evt);
+            }
+        });
+        jPanel2.add(slider, java.awt.BorderLayout.CENTER);
+
+        jPanel3.setBackground(new java.awt.Color(255, 255, 153));
+        jPanel3.setPreferredSize(new java.awt.Dimension(489, 135));
+        jPanel3.setLayout(new javax.swing.BoxLayout(jPanel3, javax.swing.BoxLayout.X_AXIS));
+
+        lbl_date.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        lbl_date.setForeground(new java.awt.Color(51, 0, 0));
+        lbl_date.setText("Date");
+        jPanel3.add(lbl_date);
+
+        jPanel4.setBackground(new java.awt.Color(255, 255, 153));
+
+        jPanel6.setBackground(new java.awt.Color(255, 255, 153));
+        jPanel6.setPreferredSize(new java.awt.Dimension(160, 107));
+
+        btn_play.setText("Pause");
+        btn_play.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        btn_play.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_playActionPerformed(evt);
+            }
+        });
+
+        lbl_comment.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        lbl_comment.setForeground(new java.awt.Color(255, 51, 51));
+        lbl_comment.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lbl_comment.setText("Comment");
+        lbl_comment.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            public void mouseMoved(java.awt.event.MouseEvent evt) {
+                lbl_commentMouseMoved(evt);
+            }
+        });
+        lbl_comment.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lbl_commentMouseClicked(evt);
+            }
+        });
+
+        cmb_rate.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1", "2", "3", "4", "5" }));
+
+        lbl_rating.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        lbl_rating.setForeground(new java.awt.Color(153, 0, 0));
+        lbl_rating.setText("Rating");
+
+        btn_rate.setText("Rate");
+        btn_rate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_rateActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
+        jPanel6.setLayout(jPanel6Layout);
+        jPanel6Layout.setHorizontalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(lbl_comment, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel6Layout.createSequentialGroup()
+                                .addComponent(lbl_rating)
+                                .addGap(0, 28, Short.MAX_VALUE))
+                            .addComponent(cmb_rate, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(btn_rate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(btn_play, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addContainerGap())
+        );
+        jPanel6Layout.setVerticalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel6Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(btn_play)
+                    .addComponent(lbl_rating, javax.swing.GroupLayout.Alignment.TRAILING))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmb_rate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btn_rate))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 16, Short.MAX_VALUE)
+                .addComponent(lbl_comment)
+                .addContainerGap())
+        );
+
+        jPanel4.add(jPanel6);
+
+        jPanel5.setBackground(new java.awt.Color(255, 255, 153));
+        jPanel5.setPreferredSize(new java.awt.Dimension(200, 120));
+
+        lbl_like.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        lbl_like.setForeground(new java.awt.Color(0, 153, 153));
+        lbl_like.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lbl_like.setText("Like");
+        lbl_like.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        lbl_like.setMaximumSize(new java.awt.Dimension(30, 17));
+        lbl_like.setMinimumSize(new java.awt.Dimension(30, 17));
+        lbl_like.setPreferredSize(new java.awt.Dimension(50, 17));
+        lbl_like.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            public void mouseMoved(java.awt.event.MouseEvent evt) {
+                lbl_likeMouseMoved(evt);
+            }
+        });
+        lbl_like.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lbl_likeMouseClicked(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lbl_likeMouseExited(evt);
+            }
+        });
+
+        btn_subscribe.setBackground(new java.awt.Color(255, 51, 51));
+        btn_subscribe.setForeground(new java.awt.Color(255, 255, 255));
+        btn_subscribe.setText("Subscribe");
+        btn_subscribe.setMaximumSize(new java.awt.Dimension(100, 23));
+        btn_subscribe.setPreferredSize(new java.awt.Dimension(120, 30));
+        btn_subscribe.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_subscribeActionPerformed(evt);
+            }
+        });
+
+        lbl_num_like.setForeground(new java.awt.Color(0, 204, 153));
+        lbl_num_like.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        lbl_num_like.setText("No : ");
+
+        btn_towatch.setBackground(new java.awt.Color(255, 0, 0));
+        btn_towatch.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        btn_towatch.setForeground(new java.awt.Color(255, 255, 255));
+        btn_towatch.setText("+");
+        btn_towatch.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_towatchActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setLayout(jPanel5Layout);
+        jPanel5Layout.setHorizontalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
+                .addContainerGap(14, Short.MAX_VALUE)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel5Layout.createSequentialGroup()
+                        .addComponent(lbl_num_like, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lbl_like, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel5Layout.createSequentialGroup()
+                        .addComponent(btn_subscribe, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btn_towatch)
+                        .addGap(5, 5, 5)))
+                .addContainerGap())
+        );
+        jPanel5Layout.setVerticalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lbl_like, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lbl_num_like))
+                .addGap(11, 11, 11)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btn_subscribe, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btn_towatch, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(48, Short.MAX_VALUE))
+        );
+
+        jPanel4.add(jPanel5);
+
+        jPanel3.add(jPanel4);
+
+        jPanel2.add(jPanel3, java.awt.BorderLayout.SOUTH);
+
+        getContentPane().add(jPanel2, java.awt.BorderLayout.SOUTH);
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void btn_playActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_playActionPerformed
+        // Play Button
+        mediaPlayerComponent.pause();
+        if(btn_play.getText().equals("Pause"))
+        {
+            btn_play.setText("Play");
+        }
+        else
+        {
+            btn_play.setText("Pause");
+        }
+    }//GEN-LAST:event_btn_playActionPerformed
+
+    private void sliderMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sliderMouseReleased
+        // Slider mouse released event
+        try {
+            dout.writeUTF("change");
+            if (slider.getValue() / 100 < 1) {
+                dout.writeUTF(""+((float) slider.getValue() / 100));
+            }
+            else{
+                dout.writeUTF(""+1.0f);
+                exitProcedure();
+            }
+            
+        } 
+        catch (IOException ex) {
+            Logger.getLogger(Stream.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_sliderMouseReleased
+
+    private void lbl_likeMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbl_likeMouseClicked
+        try {
+            // Liked
+            if(lbl_like.getText().equals("Like")){
+                dos.writeUTF("Liked");
+                dos.writeUTF(author);
+                dos.writeUTF(course);
+                dos.writeUTF(video);
+                dos.writeUTF(name);
+                dos.writeUTF(sub);
+                lbl_num_like.setText(""+(Integer.parseInt(lbl_num_like.getText())+1));
+                lbl_like.setText("Unlike");
+            }
+            else
+            {
+                dos.writeUTF("Unliked");
+                dos.writeUTF(author);
+                dos.writeUTF(course);
+                dos.writeUTF(video);
+                dos.writeUTF(name);
+                dos.writeUTF(sub);
+                lbl_num_like.setText(""+(Integer.parseInt(lbl_num_like.getText())-1));
+                lbl_like.setText("Like");
+            }
+        } 
+        catch (Exception ex) {
+            JOptionPane.showMessageDialog(null,"Some error occured "+ex.getMessage());
+        }
+    }//GEN-LAST:event_lbl_likeMouseClicked
+
+    private void lbl_likeMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbl_likeMouseMoved
+        // Changing of cursor
+        lbl_like.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        lbl_like.setForeground(Color.red);
+    }//GEN-LAST:event_lbl_likeMouseMoved
+
+    private void btn_subscribeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_subscribeActionPerformed
+        // Subscribe button
+        if(btn_subscribe.getText().equals("Subscribe"))
+        {
+            try {
+                dos.writeUTF("Subscribed");
+                dos.writeUTF(name);
+                dos.writeUTF(author);
+                btn_subscribe.setText("Unsubscribe");
+            } 
+            catch (Exception ex) {
+                JOptionPane.showMessageDialog(null,"Some exception occured : "+ex.getMessage());
+            }
+        }
+        else 
+        {
+            try {
+                dos.writeUTF("Unsubscribed");
+                dos.writeUTF(name);
+                dos.writeUTF(author);
+                btn_subscribe.setText("Subscribe");
+            } 
+            catch (Exception ex) {
+                JOptionPane.showMessageDialog(null,"Some exception occured : "+ex.getMessage());
+            }
+        }
+    }//GEN-LAST:event_btn_subscribeActionPerformed
+
+    private void lbl_commentMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbl_commentMouseMoved
+        // Comment Label
+        lbl_comment.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    }//GEN-LAST:event_lbl_commentMouseMoved
+
+    private void lbl_commentMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbl_commentMouseClicked
+        // Comment Box opens
+        Comments c = new Comments(s,name,video,author,course,sub,'s',ip);
+        c.setVisible(true);
+    }//GEN-LAST:event_lbl_commentMouseClicked
+
+    private void btn_rateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_rateActionPerformed
+        // Rate Video
+        int option = cmb_rate.getSelectedIndex();
+        try{
+            dos.writeUTF("Rate");
+            dos.writeUTF(author);
+            dos.writeUTF(course);
+            dos.writeUTF(video);
+            dos.writeUTF(name);
+            dos.writeUTF(sub);
+            dos.writeUTF(""+(option+1));
+            String str = dis.readUTF();
+            if(str.equals("Success"))
+            {
+                Thread.sleep(100);
+                Thread t = new Thread(this);
+                t.start();
+            }
+            else
+            {
+                JOptionPane.showMessageDialog(null,"Probably you have already rated the video");
+            }
+        }
+        catch(Exception e)
+        {
+            JOptionPane.showMessageDialog(null,e.getMessage());
+        }
+    }//GEN-LAST:event_btn_rateActionPerformed
+
+    private void lbl_likeMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbl_likeMouseExited
+        lbl_like.setForeground(new Color(0,153,153));
+    }//GEN-LAST:event_lbl_likeMouseExited
+
+    private void btn_towatchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_towatchActionPerformed
+        // To watch
+        try{    
+            dos.writeUTF("towatch");
+            dos.writeUTF(author);
+            dos.writeUTF(name);
+            dos.writeUTF(course);
+            dos.writeUTF(sub);
+            dos.writeUTF(date);
+            dos.writeUTF(video);
+            String str=dis.readUTF();
+            if(str.equals("Unsuccess"))
+            {
+                JOptionPane.showMessageDialog(null,"Already in toWatch list");
+            }
+        }
+        catch(Exception e)
+        {
+            JOptionPane.showMessageDialog(null,e.getMessage());
+        }
+    }//GEN-LAST:event_btn_towatchActionPerformed
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(Stream.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(Stream.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(Stream.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(Stream.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+
+        /* Create and display the form */
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                new Stream(s,name,stream,video,author,course,sub,date,ip).setVisible(true);
+            }
+        });
+    }
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btn_play;
+    private javax.swing.JButton btn_rate;
+    private javax.swing.JButton btn_subscribe;
+    private javax.swing.JButton btn_towatch;
+    private java.awt.Canvas canvas;
+    private javax.swing.JComboBox<String> cmb_rate;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel4;
+    private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanel6;
+    private javax.swing.JLabel lbl_comment;
+    private javax.swing.JLabel lbl_date;
+    private javax.swing.JLabel lbl_like;
+    private javax.swing.JLabel lbl_num_like;
+    private javax.swing.JLabel lbl_rating;
+    private javax.swing.JSlider slider;
+    // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void run() {
+        try {
+            dos.writeUTF("Like");
+            dos.writeUTF(name);
+            dos.writeUTF(video);
+            dos.writeUTF(author);
+            dos.writeUTF(course);
+            dos.writeUTF(sub);
+            int choose = Integer.parseInt(dis.readUTF());
+            if(choose==1)
+                lbl_like.setText("Unlike");
+            else
+                lbl_like.setText("Like");
+            String num = dis.readUTF();
+            lbl_num_like.setText(num);
+            
+            String rating = dis.readUTF();
+            rate = Double.parseDouble(rating);
+            lbl_rating.setText("Rating : "+rating);
+            
+            dos.writeUTF("Subscribe");
+            dos.writeUTF(name);
+            dos.writeUTF(author);
+            choose = Integer.parseInt(dis.readUTF());
+            if(choose==1)
+                btn_subscribe.setText("Unsubscribe");
+            else
+                btn_subscribe.setText("Subscribe");
+        } 
+        catch (IOException ex) {
+            JOptionPane.showMessageDialog(null,"Some exception occured "+ex.getMessage());
+        }
+    }
+}
